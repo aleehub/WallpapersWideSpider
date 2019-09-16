@@ -31,6 +31,8 @@ MANIFEST
 *.manifest
 *.spec
 
+download/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -50,6 +52,8 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+
+.idea/
 
 # Django stuff:
 *.log

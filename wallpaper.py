@@ -5,6 +5,8 @@ import requests
 
 from lxml import etree
 
+from createDir import mkdir
+
 
 def wallpaperlist(url, headers):
 
@@ -14,16 +16,20 @@ def wallpaperlist(url, headers):
     :param headers: 请求头
     :return: 返回一个下载路径列表
     """
+    # print(url)
+
     response = requests.get(url=url, headers=headers)
 
     content = etree.HTML(response.text)
 
     name_list = content.xpath("//div[@class='mini-hud' and @id='hudtitle']/a/@href")
 
+    # print(name_list)
+
     return name_list
 
 
-def download(href, header):
+def download(href, header, categories_name):
 
     """
     根据传入壁纸路径，下载该壁纸
@@ -34,7 +40,9 @@ def download(href, header):
 
     response = requests.get(href[1], headers=header)
 
-    path = "download/%s.jpg" % href[0]
+    mkdir('download/%s' % categories_name)
+
+    path = "download/%s/%s.jpg" % (categories_name, href[0])
 
     write_to_local(path, response)
 
@@ -53,7 +61,7 @@ def write_to_local(path, response):
         f.write(response.content)
 
 
-def link(page_num, header):
+def link(page_num, header, index_url):
     """
     生成一个由壁纸名字和路径组成元组的列表
     :param page_num: 页数
@@ -61,9 +69,8 @@ def link(page_num, header):
     :return:
     """
     # 最热门壁纸的首页路径
-    index_url = 'http://wallpaperswide.com/top_wallpapers/page/'
 
-    list1 = wallpaperlist(index_url+str(page_num), header)
+    list1 = wallpaperlist(index_url+"/page/"+str(page_num), header)
 
     list2 = []
 
@@ -82,41 +89,37 @@ def link(page_num, header):
     return list2
 
 
-def main(start, end, header):
+def main(start, end, header, index_info):
 
-    for i in range(start, end):
+    for item in index_info:
 
-        print("开始识别第%d页壁纸路径" % i)
+        categories_name = item[0]
 
-        down_list = link(i, header)
+        index_url = item[1]
 
-        print("识别完毕，开始下载第%d页壁纸" % i)
+        print("开始识别%s分类壁纸" % categories_name)
 
-        for j in down_list:
+        for i in range(start, end):
 
-            print("开始下载:%s.jpg" % j[0])
+            print("开始识别第%d页壁纸路径" % i)
 
-            thread_download = threading.Thread(target=download, args=(j, header))
+            # print(index_url)
 
-            thread_download.start()
+            down_list = link(i, header, index_url)
 
+            print("识别完毕，开始下载第%d页壁纸" % i)
 
-if __name__ == '__main__':
+            # print(down_list)
 
-        a = 1
+            for j in down_list:
 
-        b = 5
+                print("开始下载:%s.jpg" % j[0])
 
-        header = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36\
-                              (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
-            'Cookie': '_ga=GA1.2.1761384977.1568614064; _gid=GA1.2.409143292.1568614064; __gads=ID=b8f347fe9629b571:T=1568614066:S=ALNI_MZf1DuAq9mGzSvHv-vXE_t6_hgnWw; PHPSESSID=16bd3ec1907411f342a53005b6134d07; ae74935a9f5bd890e996f9ae0c7fe805=q5vS1ldKBFw%3D5bsJAoCRxp0%3D5JiQfeVePKY%3Dl4t%2FkEo5S%2Bc%3Daa0wj%2BrGoS4%3DlopdREWA8%2B4%3DquA2PukvyvY%3DQT%2B7MWP5KJ0%3D'
-        }
+                # download(j, header, categories_name)
 
-        main(a, b, header)
+                thread_download = threading.Thread(target=download, args=(j, header, categories_name))
 
-
-
+                thread_download.start()
 
 
 
